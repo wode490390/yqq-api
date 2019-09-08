@@ -59,3 +59,23 @@ typings/
 
 # next.js build output
 .next
+
+# Mac
+.DS_Store
+*/.DS_Store
+__MACOSX
+__MACOSX/*
+*/__MACOSX
+*/__MACOSX/*
+
+# Windows
+desktop.ini
+*/desktop.ini
+Thumbs.db
+*/Thumbs.db
+ehthumbs.db
+*/ehthumbs.db
+
+# data
+cert.pem
+key.pem

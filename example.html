@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>yqq-API Example</title>
+</head>
+<body>
+API: <input id="api" value="http://127.0.0.1/" style="width: 90%;"></input>
+<br>URL: <input id="url" value="https://y.qq.com/n/yqq/song/001uaxks4G5JL9.html" style="width: 90%;"></input>
+<br><button onclick="go()">Go</button>
+<div id="result"></div>
+<script>
+var go = function() {
+    var matcher = document.getElementById('url').value.match(/(?<=\/song\/).+(?=.html)/);
+    if (matcher.length > 0) {
+        let sid = matcher[0],
+            xhr = new XMLHttpRequest();
+        xhr.open("GET", document.getElementById('api').value + "?id=" + sid, false);
+        xhr.onload = function() {
+            if (this.status == 200) {
+                let url = xhr.response,
+                    audio = document.createElement('audio'),
+                    source = document.createElement('source'),
+                    a = document.createElement('a');
+                audio.controls = true;
+                audio.loop = true;
+                audio.autoplay = true;
+                source.src = url;
+                source.type = 'audio\/mpeg';
+                audio.appendChild(source);
+                a.href = url;
+                a.target = '_blank';
+                a.innerHTML = url;
+                document.getElementById('result').innerHTML = 'Success: ';
+                document.getElementById('result').appendChild(a);
+                document.getElementById('result').appendChild(document.createElement('br'));
+                document.getElementById('result').appendChild(audio);
+            } else {
+                document.getElementById('result').innerHTML = 'Error: HTTP ' + this.status;
+            }
+        };
+        xhr.send();
+    } else {
+        document.getElementById('result').innerHTML = 'Error: Invalid link';
+    }
+};
+</script>
+</body>
+</html>

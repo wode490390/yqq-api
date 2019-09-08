@@ -1,0 +1,23 @@
+{
+  "name": "yqq-api",
+  "version": "1.0.0",
+  "description": "yqq-API Server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wode490390/yqq-api.git"
+  },
+  "keywords": [
+    "yqq",
+    "qqmusic"
+  ],
+  "author": "wode490390",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wode490390/yqq-api/issues"
+  },
+  "homepage": "https://github.com/wode490390/yqq-api"
+}
