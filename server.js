@@ -47,12 +47,10 @@ var app = function(request, response){
             }
         };
     if (soundID) {
-        let filename = `C400${soundID}.m4a`,
+        let filename = `M500${soundID}.mp3`,
             guid = Math.round(2147483647 * Math.random()) * (new Date).getUTCMilliseconds() % 1e10;
         https.get(API_URL + qs.stringify({
-            format: 'json',
             cid: 205361747,
-            uin: 0,
             songmid: soundID,
             filename: filename,
             guid: guid
@@ -66,9 +64,7 @@ var app = function(request, response){
                     let data = JSON.parse(raw);
                     soundURL = DL_URL + filename + '?' + qs.stringify({
                         guid: guid,
-                        vkey: data.data.items[0].vkey,
-                        uin: 0,
-                        fromtag: 66
+                        vkey: data.data.items[0].vkey
                     });
                     _finish();
                 } catch (err) {
@@ -96,19 +92,19 @@ if (config.https.enable) {
 }
 
 /* Example (https://y.qq.com/n/yqq/song/001uaxks4G5JL9.html)
-GET https://c.y.qq.com/base/fcgi-bin/fcg_music_express_mobile3.fcg?format=json&cid=205361747&uin=0&songmid=001uaxks4G5JL9&filename=C400001uaxks4G5JL9.m4a&guid=7359439225
+GET https://c.y.qq.com/base/fcgi-bin/fcg_music_express_mobile3.fcg?cid=205361747&songmid=001uaxks4G5JL9&filename=M500001uaxks4G5JL9.mp3&guid=7359439225
 {
     "code": 0,
     "cid": 205361747,
-    "userip": "106.15.192.163",
+    "userip": "123.207.167.163",
     "data": {
         "expiration": 80400,
         "items": [
             {
                 "subcode": 0,
                 "songmid": "001uaxks4G5JL9",
-                "filename": "C400001uaxks4G5JL9.m4a",
-                "vkey": "21FF491753B6228C18DE6B0395AE793662BFECE300100965605FC0DF1014100D76724351BF97C009567FBC3E21D2540FCF5C5BDBBA149797"
+                "filename": "M500001uaxks4G5JL9.mp3",
+                "vkey": "A3496FB9232D0563552A4343B15AD2881D671204E6B2947FF26FE715DD184EAF3B2443954FB0E328EEFF01CA5CFDCD606E3379911B94F796"
             }
         ]
     }
