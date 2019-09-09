@@ -1,11 +1,10 @@
 const http = require('http'),
     https = require('https'),
     url = require('url'),
-    qs = require('querystring')
     fs = require('fs');
 
-const API_URL = 'https://c.y.qq.com/base/fcgi-bin/fcg_music_express_mobile3.fcg?';
-const DL_URL = 'https://dl.stream.qqmusic.qq.com/';
+const API_URL = 'http://u.y.qq.com/cgi-bin/musicu.fcg?data=',
+    DL_URL = 'https://dl.stream.qqmusic.qq.com/';
 
 var config = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 config.http.enable = config.http.enable || true;
@@ -21,7 +20,7 @@ config.cors = config.cors || '*';
 var app = function(request, response){
     let query = url.parse(request.url, true).query || {},
         soundID = query.id,
-        soundURL = ''
+        soundURL = '',
         _finish = function(err){
             if (err) {
                 console.error(err);
@@ -47,13 +46,17 @@ var app = function(request, response){
             }
         };
     if (soundID) {
-        let filename = `M500${soundID}.mp3`,
-            guid = Math.round(2147483647 * Math.random()) * (new Date).getUTCMilliseconds() % 1e10;
-        https.get(API_URL + qs.stringify({
-            cid: 205361747,
-            songmid: soundID,
-            filename: filename,
-            guid: guid
+        http.get(API_URL + JSON.stringify({
+            _: {
+                module: 'vkey.GetVkeyServer',
+                method: 'CgiGetVkey',
+                param: {
+                    songmid: [soundID],
+                    filename: [query.format == 'm4a' ? `C400${soundID}.m4a` : `M500${soundID}.mp3`],
+                    guid: "0",
+                    uin: "0"
+                }
+            }
         }), (res) => {
             let raw = '';
             res.on('data', chunk => {
@@ -62,10 +65,7 @@ var app = function(request, response){
             res.on('end', () => {
                 try {
                     let data = JSON.parse(raw);
-                    soundURL = DL_URL + filename + '?' + qs.stringify({
-                        guid: guid,
-                        vkey: data.data.items[0].vkey
-                    });
+                    soundURL = DL_URL + data._.data.midurlinfo[0].purl.replace('&uin=0&fromtag=999', '');
                     _finish();
                 } catch (err) {
                     _finish(err);
@@ -92,21 +92,64 @@ if (config.https.enable) {
 }
 
 /* Example (https://y.qq.com/n/yqq/song/001uaxks4G5JL9.html)
-GET https://c.y.qq.com/base/fcgi-bin/fcg_music_express_mobile3.fcg?cid=205361747&songmid=001uaxks4G5JL9&filename=M500001uaxks4G5JL9.mp3&guid=7359439225
+GET http://u.y.qq.com/cgi-bin/musicu.fcg?data={"_":{"module":"vkey.GetVkeyServer","method":"CgiGetVkey","param":{"songmid":["001uaxks4G5JL9"],"filename":["M500001uaxks4G5JL9.mp3"],"guid":"0","uin":"0"}}}
 {
+    "_": {
+        "data": {
+            "expiration": 80400,
+            "login_key": "",
+            "midurlinfo": [
+                {
+                    "common_downfromtag": 0,
+                    "errtype": "",
+                    "filename": "M500001uaxks4G5JL9.mp3",
+                    "flowfromtag": "",
+                    "flowurl": "",
+                    "hisbuy": 0,
+                    "hisdown": 0,
+                    "isbuy": 0,
+                    "isonly": 0,
+                    "onecan": 0,
+                    "opi128kurl": "",
+                    "opi192koggurl": "",
+                    "opi192kurl": "",
+                    "opi30surl": "",
+                    "opi48kurl": "",
+                    "opi96kurl": "",
+                    "opiflackurl": "",
+                    "p2pfromtag": 0,
+                    "pdl": 0,
+                    "pneed": 0,
+                    "pneedbuy": 0,
+                    "premain": 0,
+                    "purl": "M500001uaxks4G5JL9.mp3?guid=0&vkey=98A47C2834A4211FF97529F8CAE2F6A8170C03A7BA2AE5F4090B6968E725A0C4366F2C4419D3ABC3DF207CF387E5580804EA2CB89784EB94&uin=0&fromtag=999",
+                    "qmdlfromtag": 0,
+                    "result": 0,
+                    "songmid": "001uaxks4G5JL9",
+                    "tips": "",
+                    "uiAlert": 0,
+                    "vip_downfromtag": 0,
+                    "vkey": "98A47C2834A4211FF97529F8CAE2F6A8170C03A7BA2AE5F4090B6968E725A0C4366F2C4419D3ABC3DF207CF387E5580804EA2CB89784EB94",
+                    "wififromtag": "",
+                    "wifiurl": ""
+                }
+            ],
+            "msg": "123.207.136.134",
+            "retcode": 0,
+            "servercheck": "75a3a702b4194e920b0470750c4bf38f",
+            "sip": [],
+            "testfile2g": "",
+            "testfilewifi": "",
+            "thirdip": [
+                "",
+                ""
+            ],
+            "uin": "",
+            "verify_type": 0
+        },
+        "code": 0
+    },
     "code": 0,
-    "cid": 205361747,
-    "userip": "123.207.167.163",
-    "data": {
-        "expiration": 80400,
-        "items": [
-            {
-                "subcode": 0,
-                "songmid": "001uaxks4G5JL9",
-                "filename": "M500001uaxks4G5JL9.mp3",
-                "vkey": "A3496FB9232D0563552A4343B15AD2881D671204E6B2947FF26FE715DD184EAF3B2443954FB0E328EEFF01CA5CFDCD606E3379911B94F796"
-            }
-        ]
-    }
+    "ts": 1568031470725
 }
 */

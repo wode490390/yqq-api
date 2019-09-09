@@ -9,8 +9,9 @@ API: <input id="api" value="http://127.0.0.1/" style="width: 90%;"></input>
 <br><button onclick="go()">Go</button>
 <div id="result"></div>
 <script>
+const RE = /(?<=\/song\/).+(?=.html)/;
 var go = function() {
-    var matcher = document.getElementById('url').value.match(/(?<=\/song\/).+(?=.html)/);
+    let matcher = document.getElementById('url').value.match(RE);
     if (matcher.length > 0) {
         let sid = matcher[0],
             xhr = new XMLHttpRequest();
