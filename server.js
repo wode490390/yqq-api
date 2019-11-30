@@ -4,7 +4,7 @@ const http = require('http'),
     fs = require('fs');
 
 const API_URL = 'http://u.y.qq.com/cgi-bin/musicu.fcg?data=',
-    DL_URL = 'https://dl.stream.qqmusic.qq.com/';
+    DL_URL = 'http://mobileoc.music.tc.qq.com/'; //SPARE: http://ws.stream.qqmusic.qq.com/
 
 var config = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 config.http.enable = config.http.enable || true;

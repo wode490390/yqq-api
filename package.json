@@ -1,6 +1,6 @@
 {
   "name": "yqq-api",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "yqq-API Server",
   "main": "server.js",
   "scripts": {
