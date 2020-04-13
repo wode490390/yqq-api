@@ -1,3 +1,7 @@
+'use strict';
+
+const rlf = require('rate-limiter-flexible');
+
 const http = require('http'),
     https = require('https'),
     url = require('url'),
@@ -16,66 +20,92 @@ config.https.port = config.https.port || 443;
 config.https.cert = config.https.cert || 'cert.pem';
 config.https.cert_key = config.https.cert_key || 'key.pem';
 config.cors = config.cors || '*';
+config.rate.enable = config.rate.enable || false;
+config.rate.points = config.rate.points || 6;
+config.rate.duration = config.rate.duration || 1;
 
-var app = function(request, response){
-    let query = url.parse(request.url, true).query || {},
-        soundID = query.id,
-        soundURL = '',
-        _finish = function(err){
-            if (err) {
-                console.error(err);
-            }
-            response.setHeader('Access-Control-Allow-Origin', config.cors);
-            if (soundURL != '') {
-                if (query.callback) {
-                    response.writeHead(200, {
-                        'Content-Type': 'application/javascript'
-                    });
-                    response.end(`${query.callback}("${soundURL}")`);
+var rateLimiter = config.rate.enable ? new rlf.RateLimiterMemory({
+    points: config.rate.points,
+    duration: config.rate.duration
+}) : null;
+
+var app = (request, response) => {
+    let core = () => {
+        let query = url.parse(request.url, true).query || {},
+            soundID = query.id,
+            soundURL = '',
+            _finish = err => {
+                if (err) {
+                    console.error(err);
+                }
+
+                response.setHeader('Access-Control-Allow-Origin', config.cors);
+                if (soundURL != '') {
+                    if (query.callback) {
+                        response.writeHead(200, {
+                            'Content-Type': 'application/javascript'
+                        });
+                        response.end(`${query.callback}("${soundURL}")`);
+                    } else {
+                        response.writeHead(200, {
+                            'Content-Type': 'text/plain'
+                        });
+                        response.end(soundURL);
+                    }
                 } else {
-                    response.writeHead(200, {
-                        'Content-Type': 'text/plain'
+                    response.writeHead(400, {
+                        'Content-Type': 'text/html'
                     });
                     response.end(soundURL);
                 }
-            } else {
-                response.writeHead(400, {
+            };
+
+        if (soundID) {
+            http.get(API_URL + JSON.stringify({
+                _: {
+                    module: 'vkey.GetVkeyServer',
+                    method: 'CgiGetVkey',
+                    param: {
+                        songmid: [soundID],
+                        filename: [query.format == 'm4a' ? `C400${soundID}.m4a` : `M500${soundID}.mp3`],
+                        guid: "0",
+                        uin: "0"
+                    }
+                }
+            }), res => {
+                let raw = '';
+
+                res.on('data', chunk => {
+                    raw += chunk;
+                });
+
+                res.on('end', () => {
+                    try {
+                        let data = JSON.parse(raw);
+                        soundURL = DL_URL + data._.data.midurlinfo[0].purl.replace('&uin=0&fromtag=999', '');
+                        _finish();
+                    } catch (err) {
+                        _finish(err);
+                    }
+                });
+            }).on('error', _finish);
+        } else {
+            _finish();
+        }
+    };
+
+    if (config.rate.enable) {
+        rateLimiter.consume(response.socket.remoteAddress, 1)
+            .then(core)
+            .catch(() => {
+                response.writeHead(421, {
+                    'Access-Control-Allow-Origin': config.cors,
                     'Content-Type': 'text/html'
                 });
-                response.end(soundURL);
-            }
-        };
-    if (soundID) {
-        http.get(API_URL + JSON.stringify({
-            _: {
-                module: 'vkey.GetVkeyServer',
-                method: 'CgiGetVkey',
-                param: {
-                    songmid: [soundID],
-                    filename: [query.format == 'm4a' ? `C400${soundID}.m4a` : `M500${soundID}.mp3`],
-                    guid: "0",
-                    uin: "0"
-                }
-            }
-        }), (res) => {
-            let raw = '';
-            res.on('data', chunk => {
-                raw += chunk;
+                response.end(`Blocked ${response.socket.remoteAddress}`);
             });
-            res.on('end', () => {
-                try {
-                    let data = JSON.parse(raw);
-                    soundURL = DL_URL + data._.data.midurlinfo[0].purl.replace('&uin=0&fromtag=999', '');
-                    _finish();
-                } catch (err) {
-                    _finish(err);
-                }
-            });
-        }).on('error', err => {
-            _finish(err);
-        });
     } else {
-        _finish();
+        core();
     }
 };
 
@@ -134,7 +164,7 @@ GET http://u.y.qq.com/cgi-bin/musicu.fcg?data={"_":{"module":"vkey.GetVkeyServer
                     "wifiurl": ""
                 }
             ],
-            "msg": "123.207.136.134",
+            "msg": "10.246.57.139",
             "retcode": 0,
             "servercheck": "75a3a702b4194e920b0470750c4bf38f",
             "sip": [],
